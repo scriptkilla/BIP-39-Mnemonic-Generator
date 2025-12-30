@@ -1,21 +1,19 @@
 import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
-import { TitleCasePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { CryptoService, DerivedWalletData } from './services/crypto.service';
 import { BlockchainService } from './services/blockchain.service';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TitleCasePipe],
+  imports: [CommonModule],
 })
 export class AppComponent {
   private cryptoService = inject(CryptoService);
   private blockchainService = inject(BlockchainService);
 
   strength = signal<128 | 256>(128);
-  selectedChain = signal<'bitcoin' | 'ethereum'>('bitcoin');
   mnemonic = signal<string[]>([]);
   isLoading = signal(false);
   error = signal<string | null>(null);
@@ -74,7 +72,7 @@ export class AppComponent {
     if (!seed) return;
 
     try {
-      const data = this.cryptoService.deriveWalletData(seed, this.selectedChain());
+      const data = this.cryptoService.deriveWalletDataFromSeed(seed);
       this.derivedData.set(data);
     } catch (e) {
       this.error.set('Failed to derive wallet data from seed.');
@@ -83,17 +81,14 @@ export class AppComponent {
   }
 
   async checkAddressBalance(): Promise<void> {
-    const data = this.derivedData();
-    if (!data) return;
-
-    const address = data.chain === 'bitcoin' ? data.addressCompressed : data.address;
-    const chain = data.chain;
+    const address = this.derivedData()?.addressCompressed;
+    if (!address) return;
 
     this.isCheckingBalance.set(true);
     this.resetBalance();
 
     try {
-      const { balance, txCount } = await this.blockchainService.checkBalance(address, chain);
+      const { balance, txCount } = await this.blockchainService.checkBalance(address);
       this.balance.set(balance);
       this.txCount.set(txCount);
     } catch (e) {
@@ -108,15 +103,6 @@ export class AppComponent {
     const newStrength = parseInt(value, 10) as 128 | 256;
     if (newStrength === 128 || newStrength === 256) {
       this.strength.set(newStrength);
-    }
-  }
-
-  setChain(chain: 'bitcoin' | 'ethereum'): void {
-    if (this.selectedChain() !== chain) {
-      this.selectedChain.set(chain);
-      if (this.seed()) {
-        this.deriveAndSetWalletData(this.seed());
-      }
     }
   }
 

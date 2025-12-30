@@ -1,32 +1,19 @@
 import { Injectable } from '@angular/core';
 import { WORDLIST } from './wordlist';
-import { getPublicKey } from '@noble/secp256k1';
-import { HDKey } from '@noble/hdw';
+import * as secp from '@noble/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
 import { ripemd160 } from '@noble/hashes/ripemd160';
-import { keccak_256 } from '@noble/hashes/keccak';
-import bs58 from 'bs58';
+import * as bs58 from 'bs58';
 // Fix: Import `Buffer` to make it available in the browser environment, as it's required by the `bs58` library.
 import { Buffer } from 'buffer';
 
-export interface BitcoinDerivedData {
-  chain: 'bitcoin';
+export interface DerivedWalletData {
   privateKeyHex: string;
   wifCompressed: string;
   addressCompressed: string;
   wifUncompressed: string;
   addressUncompressed: string;
 }
-
-export interface EthereumDerivedData {
-  chain: 'ethereum';
-  privateKeyHex: string;
-  publicKeyHex: string;
-  address: string;
-}
-
-export type DerivedWalletData = BitcoinDerivedData | EthereumDerivedData;
-
 
 @Injectable({ providedIn: 'root' })
 export class CryptoService {
@@ -65,7 +52,8 @@ export class CryptoService {
     taggedPayload.set(checksum, payload.length);
     
     // The bs58 library expects a Buffer, so we convert the final Uint8Array.
-    return bs58.encode(Buffer.from(taggedPayload));
+    // The CJS module is wrapped in a 'default' property by esm.sh.
+    return bs58.default.encode(Buffer.from(taggedPayload));
   }
 
   async generateMnemonic(strength: 128 | 256): Promise<string> {
@@ -128,73 +116,55 @@ export class CryptoService {
     return this.arrayBufferToHex(seedBuffer);
   }
 
-  deriveWalletData(seedHex: string, chain: 'bitcoin' | 'ethereum'): DerivedWalletData {
-    if (chain === 'bitcoin') {
-      return this.deriveBitcoinData(seedHex);
-    } else {
-      return this.deriveEthereumData(seedHex);
-    }
-  }
-
-  private deriveBitcoinData(seedHex: string): BitcoinDerivedData {
+  deriveWalletDataFromSeed(seedHex: string): DerivedWalletData {
     // Note: This derivation is simplified for educational purposes and is NOT BIP-32 compliant.
+    // A common (but non-standard) approach is to take the first 32 bytes of the 64-byte seed as the master private key.
     const privateKeyBytes = this.hexToBytes(seedHex.substring(0, 64));
-    if (privateKeyBytes.length !== 32) throw new Error('Invalid private key length.');
-    
+
+    if (privateKeyBytes.length !== 32) {
+      throw new Error('Invalid private key length.');
+    }
+
+    // 1. Get Private Key Hex
     const privateKeyHex = this.arrayBufferToHex(privateKeyBytes);
-    
-    const wifCompressedPayload = new Uint8Array([0x80, ...privateKeyBytes, 0x01]);
+
+    // 2. Get Compressed WIF
+    const wifCompressedPayload = new Uint8Array(34);
+    wifCompressedPayload[0] = 0x80; // Mainnet prefix
+    wifCompressedPayload.set(privateKeyBytes, 1);
+    wifCompressedPayload[33] = 0x01; // Compressed public key suffix
     const wifCompressed = this.bs58checkEncode(wifCompressedPayload);
 
-    const publicKeyCompressedBytes = getPublicKey(privateKeyBytes, true);
-    const ripCompressed = ripemd160(sha256(publicKeyCompressedBytes));
-    const addressCompressedPayload = new Uint8Array([0x00, ...ripCompressed]);
+    // 3. Get Compressed Address
+    const publicKeyCompressedBytes = secp.getPublicKey(privateKeyBytes, true); // true for compressed
+    const shaCompressed = sha256(publicKeyCompressedBytes);
+    const ripCompressed = ripemd160(shaCompressed);
+    const addressCompressedPayload = new Uint8Array(21);
+    addressCompressedPayload[0] = 0x00; // Mainnet address prefix
+    addressCompressedPayload.set(ripCompressed, 1);
     const addressCompressed = this.bs58checkEncode(addressCompressedPayload);
 
-    const wifUncompressedPayload = new Uint8Array([0x80, ...privateKeyBytes]);
+    // 4. Get Uncompressed WIF
+    const wifUncompressedPayload = new Uint8Array(33);
+    wifUncompressedPayload[0] = 0x80; // Mainnet prefix
+    wifUncompressedPayload.set(privateKeyBytes, 1);
     const wifUncompressed = this.bs58checkEncode(wifUncompressedPayload);
 
-    const publicKeyUncompressedBytes = getPublicKey(privateKeyBytes, false);
-    const ripUncompressed = ripemd160(sha256(publicKeyUncompressedBytes));
-    const addressUncompressedPayload = new Uint8Array([0x00, ...ripUncompressed]);
-    // FIX: Corrected typo from bs8checkEncode to bs58checkEncode
+    // 5. Get Uncompressed Address
+    const publicKeyUncompressedBytes = secp.getPublicKey(privateKeyBytes, false); // false for uncompressed
+    const shaUncompressed = sha256(publicKeyUncompressedBytes);
+    const ripUncompressed = ripemd160(shaUncompressed);
+    const addressUncompressedPayload = new Uint8Array(21);
+    addressUncompressedPayload[0] = 0x00; // Mainnet address prefix
+    addressUncompressedPayload.set(ripUncompressed, 1);
     const addressUncompressed = this.bs58checkEncode(addressUncompressedPayload);
     
     return { 
-      chain: 'bitcoin',
       privateKeyHex,
       wifCompressed,
       addressCompressed,
       wifUncompressed,
       addressUncompressed
-    };
-  }
-
-  private deriveEthereumData(seedHex: string): EthereumDerivedData {
-    const seedBytes = this.hexToBytes(seedHex);
-    const masterKey = HDKey.fromMasterSeed(seedBytes);
-    const childNode = masterKey.derive("m/44'/60'/0'/0/0");
-
-    if (!childNode.privateKey) {
-      throw new Error('Could not derive private key for Ethereum.');
-    }
-    const privateKeyBytes = childNode.privateKey;
-    const privateKeyHex = this.arrayBufferToHex(privateKeyBytes);
-
-    const publicKeyBytes = getPublicKey(privateKeyBytes, false);
-    const publicKeyHex = this.arrayBufferToHex(publicKeyBytes);
-    
-    // Ethereum address derivation
-    // The public key for address generation is uncompressed, and we drop the leading 0x04 byte
-    const addressHash = keccak_256(publicKeyBytes.slice(1));
-    const addressBytes = addressHash.slice(-20); // Last 20 bytes
-    const address = '0x' + this.arrayBufferToHex(addressBytes);
-
-    return {
-      chain: 'ethereum',
-      privateKeyHex,
-      publicKeyHex,
-      address
     };
   }
 }
