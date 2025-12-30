@@ -1,0 +1,5 @@
+{
+  "name": "BIP-39 Mnemonic Generator",
+  "description": "A secure, client-side application to generate BIP-39 mnemonic phrases for cryptocurrency wallets. This tool is for educational purposes and helps understand the seed phrase generation process.",
+  "requestFramePermissions": []
+}

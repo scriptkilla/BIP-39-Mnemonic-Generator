@@ -1,0 +1,268 @@
+<div class="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center p-4 font-sans">
+  <div class="w-full max-w-2xl bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6">
+
+    <header class="text-center">
+      <h1 class="text-3xl font-bold text-cyan-400">BIP-39 Mnemonic Generator</h1>
+      <p class="text-gray-400 mt-2">Generate a secure mnemonic phrase for your wallet.</p>
+    </header>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="bg-gray-900/30 p-4 rounded-lg border border-gray-700">
+        <fieldset class="flex items-center justify-center space-x-4">
+          <legend class="sr-only">Select Mnemonic Length</legend>
+          <div>
+            <input type="radio" name="strength" id="12words" value="128" [checked]="strength() === 128" (change)="setStrength('128')" class="sr-only peer">
+            <label for="12words" class="block cursor-pointer rounded-lg border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium shadow-sm hover:border-cyan-500 peer-checked:border-cyan-500 peer-checked:ring-1 peer-checked:ring-cyan-500">
+              12 Words
+            </label>
+          </div>
+          <div>
+            <input type="radio" name="strength" id="24words" value="256" [checked]="strength() === 256" (change)="setStrength('256')" class="sr-only peer">
+            <label for="24words" class="block cursor-pointer rounded-lg border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium shadow-sm hover:border-cyan-500 peer-checked:border-cyan-500 peer-checked:ring-1 peer-checked:ring-cyan-500">
+              24 Words
+            </label>
+          </div>
+        </fieldset>
+      </div>
+       <div class="bg-gray-900/30 p-4 rounded-lg border border-gray-700">
+        <fieldset class="flex items-center justify-center space-x-4">
+          <legend class="sr-only">Select Blockchain</legend>
+          <div>
+            <input type="radio" name="chain" id="bitcoin" value="bitcoin" [checked]="selectedChain() === 'bitcoin'" (change)="setChain('bitcoin')" class="sr-only peer">
+            <label for="bitcoin" class="block cursor-pointer rounded-lg border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium shadow-sm hover:border-orange-500 peer-checked:border-orange-500 peer-checked:ring-1 peer-checked:ring-orange-500">
+              Bitcoin
+            </label>
+          </div>
+          <div>
+            <input type="radio" name="chain" id="ethereum" value="ethereum" [checked]="selectedChain() === 'ethereum'" (change)="setChain('ethereum')" class="sr-only peer">
+            <label for="ethereum" class="block cursor-pointer rounded-lg border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium shadow-sm hover:border-indigo-500 peer-checked:border-indigo-500 peer-checked:ring-1 peer-checked:ring-indigo-500">
+              Ethereum
+            </label>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+
+
+    <div>
+      <label for="passphrase" class="block text-sm font-medium text-gray-300">Optional Passphrase (BIP-39)</label>
+      <div class="mt-1 relative">
+        <input [type]="passphraseVisible() ? 'text' : 'password'" name="passphrase" id="passphrase" [value]="passphrase()" (input)="onPassphraseInput($event)" class="block w-full rounded-md border-gray-600 bg-gray-700 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm text-gray-100 p-3 pr-10" placeholder="Enter optional passphrase">
+        <button type="button" (click)="togglePassphraseVisibility()" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-cyan-400">
+          @if(passphraseVisible()) {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074L3.707 2.293zM10 12a2 2 0 110-4 2 2 0 010 4z" clip-rule="evenodd" />
+              <path d="M10 17a9.953 9.953 0 01-4.522-.992l.938-1.053a8.018 8.018 0 008.168-8.168l1.053-.938A9.953 9.953 0 0110 17z" />
+            </svg>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+              <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+            </svg>
+          }
+        </button>
+      </div>
+      <p class="mt-2 text-sm text-gray-500">Acts as a secret 25th word to create a unique seed. An empty passphrase is valid.</p>
+    </div>
+
+    <button (click)="generateMnemonic()" [disabled]="isLoading()" class="w-full bg-cyan-500 hover:bg-cyan-600 disabled:bg-cyan-800 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg text-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
+      @if (isLoading()) {
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Generating...</span>
+      } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M4 20h5v-5M20 4h-5v5" />
+        </svg>
+        <span>Generate New Mnemonic</span>
+      }
+    </button>
+    
+    @if (error()) {
+      <div class="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-center">
+        {{ error() }}
+      </div>
+    }
+
+    @if (mnemonic().length > 0) {
+      <div class="bg-gray-900/50 p-6 rounded-lg border border-gray-700 relative animate-fade-in">
+        <h3 class="text-lg font-semibold text-gray-300 mb-4">Your Mnemonic Phrase</h3>
+        <button (click)="copyValue(mnemonic(), 'mnemonic')" class="absolute top-4 right-4 text-gray-400 hover:text-cyan-400 transition-colors">
+          @if (copied()['mnemonic']) {
+            <span class="text-sm text-cyan-400">Copied!</span>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          }
+        </button>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 text-lg">
+          @for (word of mnemonic(); track $index) {
+            <div class="flex items-baseline">
+              <span class="text-gray-500 font-mono text-sm w-8">{{ $index + 1 }}.</span>
+              <span class="font-mono text-gray-200">{{ word }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+    
+    @if (seed()) {
+      <div class="bg-gray-900/50 p-6 rounded-lg border border-gray-700 relative animate-fade-in">
+        <h3 class="text-lg font-semibold text-gray-300 mb-4">Resulting BIP-39 Seed (512-bit)</h3>
+        <div class="w-full bg-gray-900 p-4 rounded-md break-words font-mono text-sm text-lime-400 shadow-inner">
+          {{ seed() }}
+        </div>
+        <p class="mt-3 text-xs text-gray-500">This seed is derived from your mnemonic and passphrase. It is the root used to generate all your wallet's private keys.</p>
+      </div>
+    }
+
+    @if (derivedData(); as data) {
+      <div class="bg-gray-900/50 p-6 rounded-lg border border-gray-700 space-y-4 animate-fade-in">
+        <h3 class="text-lg font-semibold text-gray-300">Derived {{ data.chain | titlecase }} Details</h3>
+        
+        @switch (data.chain) {
+          @case ('bitcoin') {
+            <!-- Private Key -->
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-gray-400">Private Key (Hex)</label>
+              <div class="flex items-center space-x-2">
+                <code class="flex-grow bg-gray-900 p-2 rounded-md break-words font-mono text-xs text-amber-400 shadow-inner">{{ data.privateKeyHex }}</code>
+                <button (click)="copyValue(data.privateKeyHex, 'pk')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-colors">
+                  @if(copied()['pk']) { <span class="text-xs text-cyan-400">Copied!</span> }
+                  @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+                </button>
+              </div>
+            </div>
+
+            <!-- WIF (Compressed) -->
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-gray-400">WIF (Compressed)</label>
+              <div class="flex items-center space-x-2">
+                <code class="flex-grow bg-gray-900 p-2 rounded-md break-words font-mono text-xs text-amber-400 shadow-inner">{{ data.wifCompressed }}</code>
+                <button (click)="copyValue(data.wifCompressed, 'wifc')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-colors">
+                  @if(copied()['wifc']) { <span class="text-xs text-cyan-400">Copied!</span> }
+                  @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+                </button>
+              </div>
+            </div>
+            
+            <!-- WIF (Uncompressed) -->
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-gray-400">WIF (Uncompressed)</label>
+              <div class="flex items-center space-x-2">
+                <code class="flex-grow bg-gray-900 p-2 rounded-md break-words font-mono text-xs text-amber-400 shadow-inner">{{ data.wifUncompressed }}</code>
+                <button (click)="copyValue(data.wifUncompressed, 'wifu')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-colors">
+                  @if(copied()['wifu']) { <span class="text-xs text-cyan-400">Copied!</span> }
+                  @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+                </button>
+              </div>
+            </div>
+
+            <div class="border-t border-gray-700/50 my-2"></div>
+
+            <!-- Address (Compressed) -->
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-gray-400">Address (P2PKH, Compressed)</label>
+              <div class="flex items-center space-x-2">
+                <code class="flex-grow bg-gray-900 p-2 rounded-md break-words font-mono text-xs text-amber-400 shadow-inner">{{ data.addressCompressed }}</code>
+                <button (click)="copyValue(data.addressCompressed, 'addressc')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-colors">
+                  @if(copied()['addressc']) { <span class="text-xs text-cyan-400">Copied!</span> }
+                  @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+                </button>
+              </div>
+            </div>
+
+            <!-- Address (Uncompressed) -->
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-gray-400">Address (P2PKH, Uncompressed)</label>
+              <div class="flex items-center space-x-2">
+                <code class="flex-grow bg-gray-900 p-2 rounded-md break-words font-mono text-xs text-amber-400 shadow-inner">{{ data.addressUncompressed }}</code>
+                <button (click)="copyValue(data.addressUncompressed, 'addressu')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-colors">
+                  @if(copied()['addressu']) { <span class="text-xs text-cyan-400">Copied!</span> }
+                  @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+                </button>
+              </div>
+            </div>
+          }
+          @case ('ethereum') {
+             <!-- Private Key -->
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-gray-400">Private Key (Hex)</label>
+              <div class="flex items-center space-x-2">
+                <code class="flex-grow bg-gray-900 p-2 rounded-md break-words font-mono text-xs text-amber-400 shadow-inner">{{ data.privateKeyHex }}</code>
+                <button (click)="copyValue(data.privateKeyHex, 'pk')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-colors">
+                  @if(copied()['pk']) { <span class="text-xs text-cyan-400">Copied!</span> }
+                  @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+                </button>
+              </div>
+            </div>
+             <!-- Public Key -->
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-gray-400">Public Key (Hex, Uncompressed)</label>
+              <div class="flex items-center space-x-2">
+                <code class="flex-grow bg-gray-900 p-2 rounded-md break-words font-mono text-xs text-amber-400 shadow-inner">{{ data.publicKeyHex }}</code>
+                <button (click)="copyValue(data.publicKeyHex, 'pubk')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-colors">
+                  @if(copied()['pubk']) { <span class="text-xs text-cyan-400">Copied!</span> }
+                  @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+                </button>
+              </div>
+            </div>
+
+            <div class="border-t border-gray-700/50 my-2"></div>
+
+             <!-- Address -->
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-gray-400">Address</label>
+              <div class="flex items-center space-x-2">
+                <code class="flex-grow bg-gray-900 p-2 rounded-md break-words font-mono text-xs text-amber-400 shadow-inner">{{ data.address }}</code>
+                <button (click)="copyValue(data.address, 'address')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-colors">
+                  @if(copied()['address']) { <span class="text-xs text-cyan-400">Copied!</span> }
+                  @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+                </button>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Balance Checker -->
+        <div class="border-t border-gray-700 pt-4">
+          <div class="flex items-center justify-between">
+            <div class="text-sm">
+              @if (balance() !== null) {
+                <p>
+                  <span class="font-bold" [class.text-green-400]="balance()! > 0" [class.text-gray-400]="balance() === 0">{{ balance() }}</span> 
+                  <span class="text-gray-400">{{ selectedChain() === 'bitcoin' ? 'BTC' : 'ETH' }}</span>
+                </p>
+                <p class="text-xs text-gray-500">{{ txCount() }} Transactions</p>
+              } @else {
+                <p class="text-gray-500">Check address balance.</p>
+              }
+            </div>
+            <button (click)="checkAddressBalance()" [disabled]="isCheckingBalance()" class="bg-gray-600 hover:bg-gray-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors flex items-center">
+              @if(isCheckingBalance()) {
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Checking...</span>
+              } @else {
+                <span>Check Balance</span>
+              }
+            </button>
+          </div>
+        </div>
+
+      </div>
+    }
+
+    <div class="text-center pt-4">
+      <p class="text-gray-500 text-sm">
+        <strong class="text-amber-500">Important:</strong> This is for educational purposes only. Never use mnemonics generated by online tools for real wallets.
+      </p>
+    </div>
+
+  </div>
+</div>
