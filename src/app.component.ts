@@ -27,6 +27,10 @@ export class AppComponent {
   txCount = signal<number | null>(null);
   isCheckingBalance = signal(false);
 
+  // For notification toast
+  notification = signal<{ message: string, type: 'success' | 'error' } | null>(null);
+  private notificationTimer: any = null;
+
   async generateMnemonic(): Promise<void> {
     this.isLoading.set(true);
     this.error.set(null);
@@ -106,15 +110,19 @@ export class AppComponent {
     }
   }
 
-  copyValue(value: string | string[], key: string): void {
+  copyValue(value: string | string[], key: string, name: string): void {
     const textToCopy = Array.isArray(value) ? value.join(' ') : value;
     if (!textToCopy) return;
 
     navigator.clipboard.writeText(textToCopy).then(() => {
+        this.showNotification(`'${name}' copied to clipboard!`);
         this.copied.update(c => ({ ...c, [key]: true }));
         setTimeout(() => {
             this.copied.update(c => ({ ...c, [key]: false }));
         }, 2000);
+    }).catch(err => {
+      console.error('Copy failed:', err);
+      this.showNotification('Failed to copy to clipboard.', 'error');
     });
   }
 
@@ -125,5 +133,16 @@ export class AppComponent {
   private resetBalance(): void {
     this.balance.set(null);
     this.txCount.set(null);
+  }
+
+  private showNotification(message: string, type: 'success' | 'error' = 'success'): void {
+    if (this.notificationTimer) {
+      clearTimeout(this.notificationTimer);
+    }
+    this.notification.set({ message, type });
+    this.notificationTimer = setTimeout(() => {
+      this.notification.set(null);
+      this.notificationTimer = null;
+    }, 3000);
   }
 }

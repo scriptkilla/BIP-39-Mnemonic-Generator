@@ -1,4 +1,23 @@
 <div class="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center p-4 font-sans">
+  
+  <!-- Notification Toast -->
+  @if (notification(); as notification) {
+    <div class="fixed top-5 right-5 bg-gray-800 border text-white p-4 rounded-lg shadow-lg animate-fade-in-down z-50" [class.border-green-500]="notification.type === 'success'" [class.border-red-500]="notification.type === 'error'">
+      <div class="flex items-center">
+          @if(notification.type === 'success') {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400 mr-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400 mr-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+          <span>{{ notification.message }}</span>
+      </div>
+    </div>
+  }
+
   <div class="w-full max-w-2xl bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6">
 
     <header class="text-center">
@@ -69,9 +88,11 @@
     @if (mnemonic().length > 0) {
       <div class="bg-gray-900/50 p-6 rounded-lg border border-gray-700 relative animate-fade-in">
         <h3 class="text-lg font-semibold text-gray-300 mb-4">Your Mnemonic Phrase</h3>
-        <button (click)="copyValue(mnemonic(), 'mnemonic')" class="absolute top-4 right-4 text-gray-400 hover:text-cyan-400 transition-colors">
+        <button (click)="copyValue(mnemonic(), 'mnemonic', 'Mnemonic Phrase')" class="absolute top-4 right-4 text-gray-400 hover:text-cyan-400 transition-colors">
           @if (copied()['mnemonic']) {
-            <span class="text-sm text-cyan-400">Copied!</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           } @else {
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -108,9 +129,12 @@
           <label class="text-sm font-medium text-gray-400">Private Key (Hex)</label>
           <div class="flex items-center space-x-2">
             <code class="flex-grow bg-gray-900 p-2 rounded-md break-words font-mono text-xs text-amber-400 shadow-inner">{{ data.privateKeyHex }}</code>
-            <button (click)="copyValue(data.privateKeyHex, 'pk')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-colors">
-              @if(copied()['pk']) { <span class="text-xs text-cyan-400">Copied!</span> }
-              @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+            <button (click)="copyValue(data.privateKeyHex, 'pk', 'Private Key')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-all duration-200" [class.!bg-green-600]="copied()['pk']" [class.!text-white]="copied()['pk']">
+              @if(copied()['pk']) { 
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              } @else { 
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> 
+              }
             </button>
           </div>
         </div>
@@ -120,9 +144,12 @@
           <label class="text-sm font-medium text-gray-400">WIF (Compressed)</label>
           <div class="flex items-center space-x-2">
             <code class="flex-grow bg-gray-900 p-2 rounded-md break-words font-mono text-xs text-amber-400 shadow-inner">{{ data.wifCompressed }}</code>
-            <button (click)="copyValue(data.wifCompressed, 'wifc')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-colors">
-              @if(copied()['wifc']) { <span class="text-xs text-cyan-400">Copied!</span> }
-              @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+            <button (click)="copyValue(data.wifCompressed, 'wifc', 'WIF (Compressed)')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-all duration-200" [class.!bg-green-600]="copied()['wifc']" [class.!text-white]="copied()['wifc']">
+              @if(copied()['wifc']) { 
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              } @else { 
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> 
+              }
             </button>
           </div>
         </div>
@@ -132,9 +159,12 @@
           <label class="text-sm font-medium text-gray-400">WIF (Uncompressed)</label>
           <div class="flex items-center space-x-2">
             <code class="flex-grow bg-gray-900 p-2 rounded-md break-words font-mono text-xs text-amber-400 shadow-inner">{{ data.wifUncompressed }}</code>
-            <button (click)="copyValue(data.wifUncompressed, 'wifu')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-colors">
-              @if(copied()['wifu']) { <span class="text-xs text-cyan-400">Copied!</span> }
-              @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+            <button (click)="copyValue(data.wifUncompressed, 'wifu', 'WIF (Uncompressed)')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-all duration-200" [class.!bg-green-600]="copied()['wifu']" [class.!text-white]="copied()['wifu']">
+              @if(copied()['wifu']) { 
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              } @else { 
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> 
+              }
             </button>
           </div>
         </div>
@@ -146,9 +176,12 @@
           <label class="text-sm font-medium text-gray-400">Address (P2PKH, Compressed)</label>
           <div class="flex items-center space-x-2">
             <code class="flex-grow bg-gray-900 p-2 rounded-md break-words font-mono text-xs text-amber-400 shadow-inner">{{ data.addressCompressed }}</code>
-            <button (click)="copyValue(data.addressCompressed, 'addressc')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-colors">
-              @if(copied()['addressc']) { <span class="text-xs text-cyan-400">Copied!</span> }
-              @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+            <button (click)="copyValue(data.addressCompressed, 'addressc', 'Address (Compressed)')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-all duration-200" [class.!bg-green-600]="copied()['addressc']" [class.!text-white]="copied()['addressc']">
+              @if(copied()['addressc']) { 
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              } @else { 
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> 
+              }
             </button>
           </div>
         </div>
@@ -158,9 +191,12 @@
           <label class="text-sm font-medium text-gray-400">Address (P2PKH, Uncompressed)</label>
           <div class="flex items-center space-x-2">
             <code class="flex-grow bg-gray-900 p-2 rounded-md break-words font-mono text-xs text-amber-400 shadow-inner">{{ data.addressUncompressed }}</code>
-            <button (click)="copyValue(data.addressUncompressed, 'addressu')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-colors">
-              @if(copied()['addressu']) { <span class="text-xs text-cyan-400">Copied!</span> }
-              @else { <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+            <button (click)="copyValue(data.addressUncompressed, 'addressu', 'Address (Uncompressed)')" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-cyan-400 transition-all duration-200" [class.!bg-green-600]="copied()['addressu']" [class.!text-white]="copied()['addressu']">
+              @if(copied()['addressu']) { 
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              } @else { 
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> 
+              }
             </button>
           </div>
         </div>
